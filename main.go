@@ -68,6 +68,27 @@ func (a *Sudoku) swapColumsSmall() {
 	a.transposition()
 }
 
+func (a *Sudoku) swapRowsArea() {
+	indexFirstArea := rand.Intn(3)
+	indexSecondArea := rand.Intn(3)
+
+	for indexFirstArea == indexSecondArea {
+		indexSecondArea = rand.Intn(3)
+	}
+
+	indexFirstArea, indexSecondArea = indexFirstArea*3, indexSecondArea*3
+
+	for i := 0; i < 3; i++ {
+		a[indexFirstArea+i], a[indexSecondArea+i] = a[indexSecondArea+i], a[indexFirstArea+i]
+	}
+}
+
+func (a *Sudoku) swapColumsArea() {
+	a.transposition()
+	a.swapRowsArea()
+	a.transposition()
+}
+
 func createSudokuBase() Sudoku {
 	var area Sudoku
 	shapeMiniArea := 3
@@ -85,8 +106,8 @@ func createSudokuBase() Sudoku {
 func newGameSudoku() {
 	game := createSudokuBase()
 	game.print()
-	game.transposition()
-	game.swapColumsSmall()
+	// game.transposition()
+	game.swapColumsArea()
 	game.print()
 }
 
