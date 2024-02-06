@@ -34,6 +34,18 @@ func (a *Sudoku) print() {
 	fmt.Print(mainLine, "\n\n")
 }
 
+func (a *Sudoku) createSudokuBase() {
+	shapeMiniArea := 3
+	for y := 0; y < (shapeMiniArea * shapeMiniArea); y++ {
+		for x := 0; x < (shapeMiniArea * shapeMiniArea); x++ {
+			a[y][x] = SudokuCell{
+				data:   ((y*shapeMiniArea+y/shapeMiniArea+x)%(shapeMiniArea*shapeMiniArea) + 1),
+				access: false,
+			}
+		}
+	}
+}
+
 func (a *Sudoku) transposition() {
 	var newArea Sudoku
 
@@ -89,24 +101,10 @@ func (a *Sudoku) swapColumsArea() {
 	a.transposition()
 }
 
-func createSudokuBase() Sudoku {
-	var area Sudoku
-	shapeMiniArea := 3
-	for y := 0; y < (shapeMiniArea * shapeMiniArea); y++ {
-		for x := 0; x < (shapeMiniArea * shapeMiniArea); x++ {
-			area[y][x] = SudokuCell{
-				data:   ((y*shapeMiniArea+y/shapeMiniArea+x)%(shapeMiniArea*shapeMiniArea) + 1),
-				access: false,
-			}
-		}
-	}
-	return area
-}
-
 func newGameSudoku() {
-	game := createSudokuBase()
+	var game Sudoku
+	game.createSudokuBase()
 	game.print()
-	// game.transposition()
 	game.swapColumsArea()
 	game.print()
 }
