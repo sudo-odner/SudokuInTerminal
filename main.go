@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"strings"
 )
@@ -99,6 +100,57 @@ func (a *Sudoku) swapColumsArea() {
 	a.transposition()
 	a.swapRowsArea()
 	a.transposition()
+}
+
+func (a Sudoku) checkValueColum(x, y, value int) bool {
+	a.transposition()
+
+	counter := 0
+	for i := range a {
+		if a[x][i].data == value {
+			counter++
+		}
+	}
+	if counter == 1 {
+		return true
+	}
+	return false
+}
+
+func (a Sudoku) checkValueLine(x, y, value int) bool {
+	counter := 0
+	for i := range a {
+		if a[y][i].data == value {
+			counter++
+		}
+	}
+	if counter == 1 {
+		return true
+	}
+	return false
+}
+
+func (a Sudoku) checkValueArea(x, y, value int) bool {
+	yArea, xArea := math.Floor(float64(y)/3), math.Floor(float64(y)/3)
+
+	counter := 0
+	for y := 0; y < 3; y++ {
+		for x := 0; x < 3; x++ {
+			if a[y+int(yArea)][x+int(xArea)].data == value {
+				counter++
+			}
+		}
+	}
+	if counter == 0 {
+		return true
+	}
+	return false
+}
+func (a Sudoku) checkValue(x, y, value int) bool {
+	if a.checkValueColum(x, y, value) && a.checkValueLine(x, y, value) && a.checkValueArea(x, y, value) {
+		return true
+	}
+	return false
 }
 
 func newGameSudoku() {
