@@ -146,14 +146,12 @@ func (a Sudoku) checkValueArea(x, y, value int) bool {
 			}
 		}
 	}
-	// fmt.Println(x, y, yArea, yArea+3, xArea, xArea+3, counter)
 	if counter == 0 {
 		return true
 	}
 	return false
 }
 func (a Sudoku) checkValue(x, y, value int) bool {
-	// fmt.Printf("%v %v %v \n \n", a.checkValueColum(x, y, value), a.checkValueLine(x, y, value), a.checkValueArea(x, y, value))
 	if a.checkValueColum(x, y, value) && a.checkValueLine(x, y, value) && a.checkValueArea(x, y, value) {
 		return true
 	}
@@ -165,7 +163,6 @@ func (a *Sudoku) generationSolveSudoku() bool {
 		for x := range a[y] {
 			if a[y][x].data == 0 {
 				for num := 1; num <= 9; num++ {
-					// fmt.Printf("%v %v: \n", num, a.checkValue(x, y, num))
 					if a.checkValue(x, y, num) {
 						a[y][x].data = num
 
@@ -183,29 +180,71 @@ func (a *Sudoku) generationSolveSudoku() bool {
 	return true
 }
 
-func (a *Sudoku) solveSudoku() Sudoku {
+func (a Sudoku) solveSudoku() (bool, Sudoku) {
 	answerSudoku := a.copy()
-	answerSudoku.generationSolveSudoku()
-
-	return answerSudoku
+	if !answerSudoku.generationSolveSudoku() {
+		return false, answerSudoku
+	}
+	return true, answerSudoku
 }
 
-func newGameSudoku() {
+func (a *Sudoku) createBaseGameSudoku() {
+	a.createSudokuBase()
+	for i := 0; i < 10; i++ {
+		switch rand.Intn(5) {
+
+		case 0:
+			a.transposition()
+		case 1:
+			a.swapRowsArea()
+		case 2:
+			a.swapRowsSmall()
+		case 3:
+			a.swapColumsSmall()
+		case 4:
+			a.swapColumsArea()
+		}
+	}
+}
+
+func (a *Sudoku) generationGameSudoku(difficult int) {
+	a.createBaseGameSudoku()
+	a.print()
+	for difficult != 0 {
+		x, y := rand.Intn(9), rand.Intn(9)
+		old_data := a[y][x].data
+		a[y][x] = SudokuCell{
+			data:   0,
+			access: true,
+		}
+		flag, _ := a.solveSudoku()
+		if flag {
+			difficult--
+		} else {
+			a[y][x] = SudokuCell{
+				data:   old_data,
+				access: false,
+			}
+		}
+	}
+}
+
+func newGameSudoku(difficult int) {
 	var game Sudoku
-	game.createSudokuBase()
-	game.transposition()
+	switch difficult {
+	case 0:
+		difficult = 41
+	case 1:
+		difficult = 56
+	case 2:
+		difficult = 66
+	}
+	game.generationGameSudoku(difficult)
 	game.print()
-	game[1][3].data = 0
-	game[3][3].data = 0
-	game[6][3].data = 0
-	game[8][1].data = 0
-	game.print()
-	answer := game.solveSudoku()
-	answer.print()
 }
 
 func main() {
-	newGameSudoku()
+	newGameSudoku(2)
 }
 
 /*
