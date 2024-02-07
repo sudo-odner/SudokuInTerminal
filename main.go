@@ -35,6 +35,15 @@ func (a *Sudoku) print() {
 	fmt.Print(mainLine, "\n\n")
 }
 
+func (a Sudoku) copy() Sudoku {
+	var newSudoku Sudoku
+
+	for i := range a {
+		copy(newSudoku[i][:], a[i][:])
+	}
+	return newSudoku
+}
+
 func (a *Sudoku) createSudokuBase() {
 	shapeMiniArea := 3
 	for y := 0; y < (shapeMiniArea * shapeMiniArea); y++ {
@@ -48,15 +57,11 @@ func (a *Sudoku) createSudokuBase() {
 }
 
 func (a *Sudoku) transposition() {
-	var newArea Sudoku
+	copySudoku := a.copy()
 
-	for i := range a {
-		copy(newArea[i][:], a[i][:])
-	}
-
-	for y := range newArea {
-		for x := range newArea {
-			a[y][x] = newArea[x][y]
+	for y := range copySudoku {
+		for x := range copySudoku {
+			a[y][x] = copySudoku[x][y]
 		}
 	}
 }
@@ -111,7 +116,7 @@ func (a Sudoku) checkValueColum(x, y, value int) bool {
 			counter++
 		}
 	}
-	if counter == 1 {
+	if counter == 0 {
 		return true
 	}
 	return false
@@ -124,41 +129,79 @@ func (a Sudoku) checkValueLine(x, y, value int) bool {
 			counter++
 		}
 	}
-	if counter == 1 {
+	if counter == 0 {
 		return true
 	}
 	return false
 }
 
 func (a Sudoku) checkValueArea(x, y, value int) bool {
-	yArea, xArea := math.Floor(float64(y)/3), math.Floor(float64(y)/3)
+	yArea, xArea := int(math.Floor(float64(y)/3)*3), int(math.Floor(float64(x)/3)*3)
 
 	counter := 0
 	for y := 0; y < 3; y++ {
 		for x := 0; x < 3; x++ {
-			if a[y+int(yArea)][x+int(xArea)].data == value {
+			if a[yArea+y][xArea+x].data == value {
 				counter++
 			}
 		}
 	}
+	// fmt.Println(x, y, yArea, yArea+3, xArea, xArea+3, counter)
 	if counter == 0 {
 		return true
 	}
 	return false
 }
 func (a Sudoku) checkValue(x, y, value int) bool {
+	// fmt.Printf("%v %v %v \n \n", a.checkValueColum(x, y, value), a.checkValueLine(x, y, value), a.checkValueArea(x, y, value))
 	if a.checkValueColum(x, y, value) && a.checkValueLine(x, y, value) && a.checkValueArea(x, y, value) {
 		return true
 	}
 	return false
 }
 
+func (a *Sudoku) generationSolveSudoku() bool {
+	for y := range a {
+		for x := range a[y] {
+			if a[y][x].data == 0 {
+				for num := 1; num <= 9; num++ {
+					// fmt.Printf("%v %v: \n", num, a.checkValue(x, y, num))
+					if a.checkValue(x, y, num) {
+						a[y][x].data = num
+
+						if a.generationSolveSudoku() {
+							return true
+						} else {
+							a[y][x].data = 0
+						}
+					}
+				}
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (a *Sudoku) solveSudoku() Sudoku {
+	answerSudoku := a.copy()
+	answerSudoku.generationSolveSudoku()
+
+	return answerSudoku
+}
+
 func newGameSudoku() {
 	var game Sudoku
 	game.createSudokuBase()
+	game.transposition()
 	game.print()
-	game.swapColumsArea()
+	game[1][3].data = 0
+	game[3][3].data = 0
+	game[6][3].data = 0
+	game[8][1].data = 0
 	game.print()
+	answer := game.solveSudoku()
+	answer.print()
 }
 
 func main() {
