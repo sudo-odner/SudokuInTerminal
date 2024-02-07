@@ -116,10 +116,7 @@ func (a Sudoku) checkValueColum(x, y, value int) bool {
 			counter++
 		}
 	}
-	if counter == 0 {
-		return true
-	}
-	return false
+	return counter == 0
 }
 
 func (a Sudoku) checkValueLine(x, y, value int) bool {
@@ -129,10 +126,7 @@ func (a Sudoku) checkValueLine(x, y, value int) bool {
 			counter++
 		}
 	}
-	if counter == 0 {
-		return true
-	}
-	return false
+	return counter == 0
 }
 
 func (a Sudoku) checkValueArea(x, y, value int) bool {
@@ -146,10 +140,7 @@ func (a Sudoku) checkValueArea(x, y, value int) bool {
 			}
 		}
 	}
-	if counter == 0 {
-		return true
-	}
-	return false
+	return counter == 0
 }
 func (a Sudoku) checkValue(x, y, value int) bool {
 	if a.checkValueColum(x, y, value) && a.checkValueLine(x, y, value) && a.checkValueArea(x, y, value) {
