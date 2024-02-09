@@ -4,7 +4,14 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"os"
+	"os/exec"
+	"strconv"
 	"strings"
+
+	"atomicgo.dev/keyboard"
+	"atomicgo.dev/keyboard/keys"
+	"github.com/fatih/color"
 )
 
 type Sudoku [9][9]SudokuCell
@@ -28,11 +35,59 @@ func (a *Sudoku) print() {
 			if x%3 == 0 {
 				fmt.Print("|")
 			}
-			fmt.Printf(" %v |", cell.data)
+			noAccess := color.New(color.FgCyan).SprintFunc()
+			if cell.access {
+				fmt.Printf(" %v |", cell.data)
+			} else {
+				fmt.Printf(" %v |", noAccess(cell.data))
+			}
 		}
 		fmt.Print("\n")
 	}
 	fmt.Print(mainLine, "\n\n")
+}
+
+func (a *Sudoku) returnSudokuByCordsPlayer(posX, posY int) {
+	var mainLine = strings.Repeat("=", 39)
+	var secondLine = "|---|---|---||---|---|---||---|---|---|"
+	for y := range a {
+		if y%3 == 0 {
+			fmt.Println(mainLine)
+		} else {
+			fmt.Println(secondLine)
+		}
+		for x := range a[y] {
+			cell := a[y][x]
+			if x%3 == 0 {
+				fmt.Print("|")
+			}
+			noAccess := color.New(color.FgCyan).SprintFunc()
+			if y == posY && x == posX {
+				if cell.access {
+					fmt.Printf("[%v]|", cell.data)
+				} else {
+					fmt.Printf("[%v]|", noAccess(cell.data))
+				}
+			} else {
+				if cell.access {
+					fmt.Printf(" %v |", cell.data)
+				} else {
+					fmt.Printf(" %v |", noAccess(cell.data))
+				}
+			}
+		}
+		fmt.Print("\n")
+	}
+	fmt.Print(mainLine, "\n\n")
+}
+
+func (a *Sudoku) setCellUser(x, y, value int) bool {
+	if a[y][x].access {
+		a[y][x].data = value
+		return false
+	}
+
+	return true
 }
 
 func (a Sudoku) copy() Sudoku {
@@ -200,7 +255,6 @@ func (a *Sudoku) createBaseGameSudoku() {
 
 func (a *Sudoku) generationGameSudoku(difficult int) {
 	a.createBaseGameSudoku()
-	a.print()
 	for difficult != 0 {
 		x, y := rand.Intn(9), rand.Intn(9)
 		old_data := a[y][x].data
@@ -220,7 +274,7 @@ func (a *Sudoku) generationGameSudoku(difficult int) {
 	}
 }
 
-func newGameSudoku(difficult int) {
+func newGameSudoku(difficult int) Sudoku {
 	var game Sudoku
 	switch difficult {
 	case 0:
@@ -231,31 +285,178 @@ func newGameSudoku(difficult int) {
 		difficult = 66
 	}
 	game.generationGameSudoku(difficult)
-	game.print()
+	return game
 }
 
 func main() {
-	newGameSudoku(2)
-}
+	flag := true
+	flagInsert := false
+	cordPlayer := []int{0, 0}
+	var game Sudoku
+	cmd := exec.Command("clear")
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+	fmt.Println()
+	fmt.Println()
+	fmt.Println()
+	fmt.Println()
+	fmt.Println()
+	fmt.Println("       Press n for a start game       ")
+	fmt.Println()
+	fmt.Println()
+	fmt.Println()
+	fmt.Println()
+	fmt.Println()
+	keyboard.Listen(func(key keys.Key) (stop bool, err error) {
+		if key.Code == keys.CtrlC {
+			return true, nil // Stop listener by returning true on Ctrl+C
+		}
+		if flag {
+			cmd := exec.Command("clear")
+			cmd.Stdout = os.Stdout
+			cmd.Run()
+			fmt.Println()
+			fmt.Println()
+			fmt.Println()
+			fmt.Println()
+			fmt.Println()
+			fmt.Println("       Press n for a start game       ")
+			fmt.Println()
+			fmt.Println()
+			fmt.Println()
+			fmt.Println()
+			fmt.Println()
+		}
+		if key.String() == "n" {
+			flagInsert = false
+			flag = false
+			cmd := exec.Command("clear")
+			cmd.Stdout = os.Stdout
+			cmd.Run()
+			game = newGameSudoku(2)
+			game.returnSudokuByCordsPlayer(cordPlayer[0], cordPlayer[1])
+			fmt.Println("         insert mode off          ")
+			fmt.Println("          n - New game            ")
+			fmt.Println("i - Insert number 1-9, 0 - nothing")
+			fmt.Println("        ←, →, ↑, ↓ - moving       ")
 
-/*
-=======================================
-| 5 | 2 | 5 || 0 | 7 | 0 || 0 | 0 | 0 |
-|---|---|---||---|---|---||---|---|---|
-| 6 | 0 | 0 || 1 | 9 | 5 || 0 | 0 | 0 |
-|---|---|---||---|---|---||---|---|---|
-| 0 | 9 | 8 || 0 | 0 | 0 || 0 | 6 | 0 |
-=======================================
-| 8 | 0 | 0 || 0 | 6 | 0 || 0 | 0 | 3 |
-|---|---|---||---|---|---||---|---|---|
-| 4 | 0 | 0 || 8 | 0 | 3 || 0 | 0 | 1 |
-|---|---|---||---|---|---||---|---|---|
-| 7 | 0 | 0 || 0 | 2 | 0 || 0 | 0 | 6 |
-=======================================
-| 8 | 0 | 0 || 0 | 6 | 0 || 0 | 0 | 3 |
-|---|---|---||---|---|---||---|---|---|
-| 4 | 0 | 0 || 8 | 0 | 3 || 0 | 0 | 1 |
-|---|---|---||---|---|---||---|---|---|
-| 7 | 0 | 0 || 0 | 2 | 0 || 0 | 0 | 6 |
-=======================================
-*/
+		}
+
+		if key.String() == "up" && !flag && !flagInsert {
+			cordPlayer[1]--
+			if cordPlayer[1] < 0 {
+				cordPlayer[1] += 9
+			}
+			cmd := exec.Command("clear")
+			cmd.Stdout = os.Stdout
+			cmd.Run()
+			game.returnSudokuByCordsPlayer(cordPlayer[0], cordPlayer[1])
+			fmt.Println("         insert mode off          ")
+			fmt.Println("          n - New game            ")
+			fmt.Println("i - Insert number 1-9, 0 - nothing")
+			fmt.Println("        ←, →, ↑, ↓ - moving       ")
+		}
+		if key.String() == "down" && !flag && !flagInsert {
+			cordPlayer[1]++
+			if cordPlayer[1] > 8 {
+				cordPlayer[1] -= 9
+			}
+			cmd := exec.Command("clear")
+			cmd.Stdout = os.Stdout
+			cmd.Run()
+			game.returnSudokuByCordsPlayer(cordPlayer[0], cordPlayer[1])
+			fmt.Println("         insert mode off          ")
+			fmt.Println("          n - New game            ")
+			fmt.Println("i - Insert number 1-9, 0 - nothing")
+			fmt.Println("        ←, →, ↑, ↓ - moving       ")
+		}
+		if key.String() == "left" && !flag && !flagInsert {
+			cordPlayer[0]--
+			if cordPlayer[0] < 0 {
+				cordPlayer[0] += 9
+			}
+			cmd := exec.Command("clear")
+			cmd.Stdout = os.Stdout
+			cmd.Run()
+			game.returnSudokuByCordsPlayer(cordPlayer[0], cordPlayer[1])
+			fmt.Println("         insert mode off          ")
+			fmt.Println("          n - New game            ")
+			fmt.Println("i - Insert number 1-9, 0 - nothing")
+			fmt.Println("        ←, →, ↑, ↓ - moving       ")
+		}
+		if key.String() == "right" && !flag && !flagInsert {
+			cordPlayer[0]++
+			if cordPlayer[0] > 8 {
+				cordPlayer[0] -= 9
+			}
+			cmd := exec.Command("clear")
+			cmd.Stdout = os.Stdout
+			cmd.Run()
+			game.returnSudokuByCordsPlayer(cordPlayer[0], cordPlayer[1])
+			fmt.Println("         insert mode off          ")
+			fmt.Println("          n - New game            ")
+			fmt.Println("i - Insert number 1-9, 0 - nothing")
+			fmt.Println("        ←, →, ↑, ↓ - moving       ")
+		}
+
+		if key.String() == "i" && !flag {
+			cmd := exec.Command("clear")
+			cmd.Stdout = os.Stdout
+			cmd.Run()
+			game.returnSudokuByCordsPlayer(cordPlayer[0], cordPlayer[1])
+			if !flagInsert {
+				flagInsert = true
+				fmt.Println("         insert mode on           ")
+			} else {
+				flagInsert = false
+				fmt.Println("         insert mode off          ")
+			}
+			fmt.Println("          n - New game            ")
+			fmt.Println("i - Insert number 1-9, 0 - nothing")
+			fmt.Println("        ←, →, ↑, ↓ - moving       ")
+			return false, nil
+		}
+
+		if (key.String() == "0" || key.String() == "1" || key.String() == "2" || key.String() == "3" || key.String() == "4" || key.String() == "5" || key.String() == "6" || key.String() == "7" || key.String() == "8" || key.String() == "9") && flagInsert {
+			value := key.String()
+			cmd := exec.Command("clear")
+			cmd.Stdout = os.Stdout
+			cmd.Run()
+			num, _ := strconv.Atoi(value)
+
+			if game.setCellUser(cordPlayer[0], cordPlayer[1], num) {
+				fmt.Println()
+				fmt.Println()
+				fmt.Println()
+				fmt.Println()
+				fmt.Println()
+				fmt.Println("     The number cannot be changed     ")
+				fmt.Println("             press enter              ")
+				fmt.Println()
+				fmt.Println()
+				fmt.Println()
+				fmt.Println()
+			} else {
+				game.returnSudokuByCordsPlayer(cordPlayer[0], cordPlayer[1])
+				fmt.Println("         insert mode off          ")
+				fmt.Println("          n - New game            ")
+				fmt.Println("i - Insert number 1-9, 0 - nothing")
+				fmt.Println("        ←, →, ↑, ↓ - moving       ")
+				flagInsert = false
+			}
+		}
+
+		if key.String() == "enter" && !flag && flagInsert {
+
+			cmd := exec.Command("clear")
+			cmd.Stdout = os.Stdout
+			cmd.Run()
+			game.returnSudokuByCordsPlayer(cordPlayer[0], cordPlayer[1])
+			fmt.Println("          n - New game            ")
+			fmt.Println("i - Insert number 1-9, 0 - nothing")
+			fmt.Println("        ←, →, ↑, ↓ - moving       ")
+		}
+		// fmt.Println("\r" + key.String()) // Print every key press
+		return false, nil // Return false to continue listening
+	})
+}
